@@ -1,3 +1,5 @@
+绿皮车是一款基于兴趣匹配的临时性陌生人聊天应用。它通过模拟火车行程的方式,为用户提供随机、短暂但高度契合的会话体验。
+
 # create-svelte
 
 Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
