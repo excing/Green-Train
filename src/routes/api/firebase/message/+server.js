@@ -19,7 +19,7 @@ import https from 'https';
 import { google } from 'googleapis';
 import { checkHaveTokenInResult } from '$lib/utils.js';
 
-const redis = new Redis(RedisPath);
+// const redis = new Redis(RedisPath);
 
 export async function POST({ request, cookies }) {
   const { token, message } = await request.json();
