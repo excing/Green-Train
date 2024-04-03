@@ -24,19 +24,20 @@ const redis = new Redis(RedisPath);
 export async function POST({ request, cookies }) {
   const { token, message } = await request.json();
 
-  redis.get('firebase_tokens', (err, result) => {
-    if (err) {
-      console.error(err);
-    } else {
-      if (checkHaveTokenInResult(token, result)) {
-        console.log(`firebase sender token: ${token}`);
-        console.log(`firebase send message: ${message}`);
-        sendFcmMessageWithSDK(buildCommonMessage(token, 'New message', message));
-      } else {
-        console.error(`firebase no sender: ${token}`);
-      }
-    }
-  });
+  sendFcmMessageWithSDK(buildCommonMessage(token, 'New message', message));
+  // redis.get('firebase_tokens', (err, result) => {
+  //   if (err) {
+  //     console.error(err);
+  //   } else {
+  //     if (checkHaveTokenInResult(token, result)) {
+  //       console.log(`firebase sender token: ${token}`);
+  //       console.log(`firebase send message: ${message}`);
+  //       sendFcmMessageWithSDK(buildCommonMessage(token, 'New message', message));
+  //     } else {
+  //       console.error(`firebase no sender: ${token}`);
+  //     }
+  //   }
+  // });
 
   return json({ status: 201 });
 }
