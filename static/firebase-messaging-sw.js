@@ -29,10 +29,9 @@ messaging.onBackgroundMessage(function (payload) {
 
     // self.registration.showNotification(notificationTitle,
     //     notificationOptions);
-    var notification = new Notification(notificationTitle);
+    var notification = new Notification(notificationTitle, notificationOptions);
 
     notification.onclick = function () {
-        console.log("Notification clicked!");
         // 这里可以添加点击通知后的操作，比如打开一个链接
         window.open("./");
     };
