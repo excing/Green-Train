@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Import the functions you need from the SDKs you need
-	import { initializeApp } from 'firebase/app';
+	import { getApps, initializeApp } from 'firebase/app';
 
 	import { onMount, onDestroy } from 'svelte';
 	import { getMessaging, getToken, onMessage } from 'firebase/messaging';
@@ -36,8 +36,13 @@
 		// User has granted permission
 		console.log('Notification permission granted.');
 
+		if (0 == getApps().length) {
+			initializeApp(firebaseConfig);
+			console.log('firebase initializ app on fg');
+		}
+
 		// Fetch the FCM token
-		const messaging = getMessaging(initializeApp(firebaseConfig));
+		const messaging = getMessaging();
 		getToken(messaging, {
 			vapidKey:
 				'BF7KMoDxFEhaDawO3c1lvJXozBhFCVudP8nnd-akz9oArcREzl1jOMhW0vGtIbsd24AgPA3Hvi2YIawOl5JgUFs'
@@ -77,6 +82,7 @@
 			} else if (permission === 'denied') {
 				// User has denied permission
 				console.error('Notification permission denied.');
+				alert('未授权消息通知，无法使用绿皮车。');
 			}
 		});
 	}
