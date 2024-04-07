@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Import the functions you need from the SDKs you need
-	import { getApps, initializeApp } from 'firebase/app';
+	import { getApps, getApp, initializeApp } from 'firebase/app';
 
 	import { onMount, onDestroy } from 'svelte';
 	import { getMessaging, getToken, onMessage } from 'firebase/messaging';
@@ -32,6 +32,17 @@
 
 	onDestroy(unsubscribe);
 
+	// function regiesteServiceWorker() {
+	// 	navigator.serviceWorker.register('/firebase-messaging-sw01.js')
+  //     .then((registration) => {
+  //       console.log('Service Worker registered:', registration);
+	// 			onNotificationPermissionGranted(registration);
+  //     })
+  //     .catch((error) => {
+  //       console.log('Service Worker registration failed:', error);
+  //     });
+	// }
+
 	function onNotificationPermissionGranted() {
 		// User has granted permission
 		console.log('Notification permission granted.');
@@ -42,7 +53,7 @@
 		}
 
 		// Fetch the FCM token
-		const messaging = getMessaging();
+		const messaging = getMessaging(getApp());
 		getToken(messaging, {
 			vapidKey:
 				'BF7KMoDxFEhaDawO3c1lvJXozBhFCVudP8nnd-akz9oArcREzl1jOMhW0vGtIbsd24AgPA3Hvi2YIawOl5JgUFs'
