@@ -1,5 +1,4 @@
 import { json } from '@sveltejs/kit';
-import { RedisPath } from '$env/static/private'
 import { checkHaveTokenInResult } from "$lib/utils.js";
 
 
