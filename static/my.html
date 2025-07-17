@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 同频列车</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header span {
+            font-size: 1.5em;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .header h3 {
+            margin: 0;
+            font-size: 1.2em;
+            flex-grow: 1;
+        }
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            background: linear-gradient(to right, #6dd5ed, #2193b0); /* 蓝色渐变背景 */
+            color: white;
+            position: relative;
+            overflow: hidden;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .profile-section::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: rotate(45deg);
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            color: #2193b0;
+            margin-bottom: 15px;
+            border: 3px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        .profile-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .profile-id {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .ticket-balance-section {
+            background-color: #fff;
+            padding: 15px 20px;
+            margin: 0 20px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        .ticket-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .ticket-item .count {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .ticket-item .label {
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        .menu-item:hover {
+            background-color: #f9f9f9;
+        }
+        .menu-item .icon {
+            font-size: 1.4em;
+            margin-right: 15px;
+            color: #007bff;
+        }
+        .menu-item span {
+            font-size: 1.1em;
+            flex-grow: 1;
+        }
+        .menu-item .arrow {
+            color: #ccc;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span>&lt;</span> <h3>个人中心</h3>
+    </div>
+
+    <div class="profile-section">
+        <div class="profile-avatar">
+            🚂
+        </div>
+        <div class="profile-name">列车员小明</div>
+        <div class="profile-id">ID: train_master_xm</div>
+    </div>
+
+    <div class="ticket-balance-section">
+        <div class="ticket-item">
+            <div class="count">7</div>
+            <div class="label">普通车票</div>
+        </div>
+        <div class="ticket-item">
+            <div class="count">0</div>
+            <div class="label">月票</div>
+        </div>
+        <div class="ticket-item">
+            <div class="count">5</div>
+            <div class="label">推荐票</div>
+        </div>
+    </div>
+
+    <ul class="menu-list">
+        <li class="menu-item">
+            <span class="icon">📚</span>
+            <span>我的旅程日记</span>
+            <span class="arrow">&gt;</span>
+        </li>
+        <li class="menu-item">
+            <span class="icon">🎫</span>
+            <span>我的车票</span>
+            <span class="arrow">&gt;</span>
+        </li>
+        <li class="menu-item">
+            <span class="icon">💌</span>
+            <span>邀请好友</span>
+            <span class="arrow">&gt;</span>
+        </li>
+        <li class="menu-item">
+            <span class="icon">✍️</span>
+            <span>成为列车长</span>
+            <span class="arrow">&gt;</span>
+        </li>
+        <li class="menu-item">
+            <span class="icon">⚙️</span>
+            <span>设置</span>
+            <span class="arrow">&gt;</span>
+        </li>
+        <li class="menu-item">
+            <span class="icon">❓</span>
+            <span>帮助中心</span>
+            <span class="arrow">&gt;</span>
+        </li>
+    </ul>
+</body>
+</html>

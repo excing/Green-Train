@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购票 - 同频列车</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header span {
+            font-size: 1.5em;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .header h3 {
+            margin: 0;
+            font-size: 1.2em;
+            flex-grow: 1;
+        }
+        .ticket-machine-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .station-list {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .station-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .station-item:last-child {
+            border-bottom: none;
+        }
+        .station-item:hover {
+            background-color: #f9f9f9;
+        }
+        .station-item.selected-start, .station-item.selected-end {
+            background-color: #d1ecf1;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .station-item.in-journey {
+            background-color: #e2f2e5;
+            color: #28a745;
+        }
+        .station-info {
+            text-align: left;
+        }
+        .station-info .time {
+            font-size: 0.9em;
+            color: #888;
+        }
+        .fare-summary {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: auto; /* Push to bottom */
+        }
+        .fare-summary p {
+            margin: 5px 0;
+            font-size: 1.1em;
+        }
+        .fare-summary .highlight {
+            font-weight: bold;
+            color: #28a745;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover:not(:disabled) {
+            background-color: #218838;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span>&lt;</span> <h3>G2077: 深度解读《三体》</h3>
+    </div>
+
+    <div class="ticket-machine-container">
+        <div class="station-list" id="stationList">
+            <div class="station-item" data-station-id="1" data-duration="10">
+                <div class="station-info">
+                    <strong>21:00 | 起始站：【整体初印象】</strong>
+                    <div class="time">约 10 分钟</div>
+                </div>
+            </div>
+            <div class="station-item" data-station-id="2" data-duration="15">
+                <div class="station-info">
+                    <strong>21:10 | 第二站：【角色万花筒】</strong>
+                    <div class="time">约 15 分钟</div>
+                </div>
+            </div>
+            <div class="station-item" data-station-id="3" data-duration="15">
+                <div class="station-info">
+                    <strong>21:25 | 第三站：【情节放大镜】</strong>
+                    <div class="time">约 15 分钟</div>
+                </div>
+            </div>
+            <div class="station-item" data-station-id="4" data-duration="10">
+                <div class="station-info">
+                    <strong>21:40 | 第四站：【思想火花】</strong>
+                    <div class="time">约 10 分钟</div>
+                </div>
+            </div>
+            <div class="station-item" data-station-id="5" data-duration="10">
+                <div class="station-info">
+                    <strong>21:50 | 终点站：【自由漫谈】</strong>
+                    <div class="time">约 10 分钟</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fare-summary">
+            <p>行程: <span id="journeySummary">请选择上车站和下车站</span></p>
+            <p>预计时长: <span id="durationSummary">0</span> 分钟</p>
+            <p>所需票价: <span id="fareSummary" class="highlight">0</span> 张普通车票</p>
+            <p>您的余额: <span id="balance">7</span> 张普通车票</p>
+            <button id="buyTicketBtn" disabled>确认购票</button>
+        </div>
+    </div>
+
+    <script>
+        const stationItems = document.querySelectorAll('.station-item');
+        const journeySummary = document.getElementById('journeySummary');
+        const durationSummary = document.getElementById('durationSummary');
+        const fareSummary = document.getElementById('fareSummary');
+        const balanceSpan = document.getElementById('balance');
+        const buyTicketBtn = document.getElementById('buyTicketBtn');
+
+        let startStation = null;
+        let endStation = null;
+        let currentBalance = parseInt(balanceSpan.textContent);
+
+        function updateUI() {
+            stationItems.forEach(item => {
+                item.classList.remove('selected-start', 'selected-end', 'in-journey');
+            });
+
+            if (startStation) {
+                document.querySelector(`[data-station-id="${startStation.dataset.stationId}"]`).classList.add('selected-start');
+            }
+            if (endStation) {
+                document.querySelector(`[data-station-id="${endStation.dataset.stationId}"]`).classList.add('selected-end');
+            }
+
+            let calculatedDuration = 0;
+            let calculatedFare = 0;
+
+            if (startStation && endStation) {
+                const startIndex = Array.from(stationItems).indexOf(startStation);
+                const endIndex = Array.from(stationItems).indexOf(endStation);
+
+                if (startIndex <= endIndex) {
+                    journeySummary.textContent = `${startStation.querySelector('strong').textContent.split(' | ')[1]} -> ${endStation.querySelector('strong').textContent.split(' | ')[1]}`;
+                    calculatedFare = (endIndex - startIndex) + 1; // Number of stations travelled
+                    
+                    for (let i = startIndex; i <= endIndex; i++) {
+                        calculatedDuration += parseInt(stationItems[i].dataset.duration);
+                        stationItems[i].classList.add('in-journey');
+                    }
+                } else {
+                    // Invalid selection (end station before start station)
+                    journeySummary.textContent = '选择无效，请重新选择';
+                    calculatedFare = 0;
+                    calculatedDuration = 0;
+                }
+            } else if (startStation) {
+                journeySummary.textContent = `${startStation.querySelector('strong').textContent.split(' | ')[1]} -> 请选择下车站`;
+            } else {
+                journeySummary.textContent = '请选择上车站和下车站';
+            }
+
+            durationSummary.textContent = calculatedDuration;
+            fareSummary.textContent = calculatedFare;
+
+            if (calculatedFare > 0 && currentBalance >= calculatedFare) {
+                buyTicketBtn.disabled = false;
+                buyTicketBtn.textContent = `确认购票 (${calculatedFare} 张)`;
+            } else {
+                buyTicketBtn.disabled = true;
+                buyTicketBtn.textContent = `车票不足 或 未选择行程`;
+            }
+        }
+
+        stationItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (!startStation) {
+                    startStation = item;
+                } else if (!endStation) {
+                    const startIndex = Array.from(stationItems).indexOf(startStation);
+                    const clickedIndex = Array.from(stationItems).indexOf(item);
+                    if (clickedIndex < startIndex) {
+                        // If selected end station is before start station, reset
+                        startStation = item;
+                        endStation = null;
+                    } else {
+                        endStation = item;
+                    }
+                } else { // Both are selected, reset and start new selection
+                    startStation = item;
+                    endStation = null;
+                }
+                updateUI();
+            });
+        });
+
+        buyTicketBtn.addEventListener('click', () => {
+            if (!buyTicketBtn.disabled) {
+                currentBalance -= parseInt(fareSummary.textContent);
+                balanceSpan.textContent = currentBalance;
+                alert(`购票成功！您的行程是 ${journeySummary.textContent}，花费 ${fareSummary.textContent} 张车票。`);
+                // Simulate going to ticket success page
+                // window.location.href = 'ticket_success.html'; 
+                startStation = null;
+                endStation = null;
+                updateUI(); // Reset UI after purchase
+            }
+        });
+
+        updateUI(); // Initial UI update
+    </script>
+</body>
+</html>
