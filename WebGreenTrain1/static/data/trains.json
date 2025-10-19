@@ -1,0 +1,156 @@
+[
+  {
+    "id": "K7701",
+    "name": "K7701",
+    "theme": "聊聊诺兰的新电影",
+    "description": "《星际穿越》、《盗梦空间》、《Dunkirk》……你最喜欢诺兰的哪部作品？",
+    "stations": [
+      {
+        "name": "北京站",
+        "description": "整体初印象",
+        "departure_time": "2025-10-19T21:00:00"
+      },
+      {
+        "name": "天津站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-19T22:30:00",
+        "departure_time": "2025-10-19T22:45:00"
+      },
+      {
+        "name": "济南站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-20T02:15:00",
+        "departure_time": "2025-10-20T02:30:00"
+      },
+      {
+        "name": "南京站",
+        "description": "终点站",
+        "arrival_time": "2025-10-20T08:00:00"
+      }
+    ],
+    "departure_time": "2025-10-19T21:00:00",
+    "carriages": 10,
+    "rows_per_carriage": 20
+  },
+  {
+    "id": "K7702",
+    "name": "K7702",
+    "theme": "分享你的旅行故事",
+    "description": "去过哪些有趣的地方？分享你的旅行见闻和冒险经历",
+    "stations": [
+      {
+        "name": "上海站",
+        "description": "起始站",
+        "departure_time": "2025-10-19T19:30:00"
+      },
+      {
+        "name": "杭州站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-19T21:00:00",
+        "departure_time": "2025-10-19T21:15:00"
+      },
+      {
+        "name": "南昌站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-20T00:30:00",
+        "departure_time": "2025-10-20T00:45:00"
+      },
+      {
+        "name": "长沙站",
+        "description": "终点站",
+        "arrival_time": "2025-10-20T05:00:00"
+      }
+    ],
+    "departure_time": "2025-10-19T19:30:00",
+    "carriages": 8,
+    "rows_per_carriage": 18
+  },
+  {
+    "id": "K7703",
+    "name": "K7703",
+    "theme": "讨论最喜欢的书籍",
+    "description": "你最近在读什么书？推荐你喜欢的作者和作品",
+    "stations": [
+      {
+        "name": "广州站",
+        "description": "起始站",
+        "departure_time": "2025-10-19T20:00:00"
+      },
+      {
+        "name": "深圳站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-19T21:30:00",
+        "departure_time": "2025-10-19T21:45:00"
+      },
+      {
+        "name": "厦门站",
+        "description": "终点站",
+        "arrival_time": "2025-10-20T02:00:00"
+      }
+    ],
+    "departure_time": "2025-10-19T20:00:00",
+    "carriages": 6,
+    "rows_per_carriage": 16
+  },
+  {
+    "id": "K7704",
+    "name": "K7704",
+    "theme": "音乐爱好者聚集地",
+    "description": "你喜欢什么音乐风格？分享你的歌单和音乐品味",
+    "stations": [
+      {
+        "name": "成都站",
+        "description": "起始站",
+        "departure_time": "2025-10-19T18:00:00"
+      },
+      {
+        "name": "重庆站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-19T20:00:00",
+        "departure_time": "2025-10-19T20:15:00"
+      },
+      {
+        "name": "武汉站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-20T00:30:00",
+        "departure_time": "2025-10-20T00:45:00"
+      },
+      {
+        "name": "郑州站",
+        "description": "终点站",
+        "arrival_time": "2025-10-20T06:00:00"
+      }
+    ],
+    "departure_time": "2025-10-19T18:00:00",
+    "carriages": 12,
+    "rows_per_carriage": 22
+  },
+  {
+    "id": "K7705",
+    "name": "K7705",
+    "theme": "美食探险家",
+    "description": "你的家乡美食是什么？分享美食故事和烹饪经验",
+    "stations": [
+      {
+        "name": "西安站",
+        "description": "起始站",
+        "departure_time": "2025-10-19T17:00:00"
+      },
+      {
+        "name": "洛阳站",
+        "description": "中途停靠",
+        "arrival_time": "2025-10-19T19:30:00",
+        "departure_time": "2025-10-19T19:45:00"
+      },
+      {
+        "name": "开封站",
+        "description": "终点站",
+        "arrival_time": "2025-10-20T00:00:00"
+      }
+    ],
+    "departure_time": "2025-10-19T17:00:00",
+    "carriages": 9,
+    "rows_per_carriage": 20
+  }
+]
+
