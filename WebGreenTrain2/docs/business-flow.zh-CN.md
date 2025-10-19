@@ -40,12 +40,15 @@
   - 用途：
     - 票据（Ticket）与支付摘要。
     - 座位锁与占用（下单/支付过程的并发控制）。
-    - 房间 seq（消息有序递增号）与房间生命周期标记（pending/open/closed）。
-  - 不存消息体：所有聊天消息仅通过 FCM 下发与浏览器本地保存，不进入持久化数据库。
+    - 用户积分账户与签到记录（points_balance、last_claim_date）。
+  - 不存消息体，也不持久化房间 seq/生命周期：所有聊天消息仅通过 FCM 下发与浏览器本地保存；房间开闭按规则实时计算。
 - FCM（实时消息通道）
-  - 作为“服务端中转但不持久化”的消息分发通道。服务端负责：鉴权校验、限流、生成 seq、投递到 FCM topic。
+  - 作为“服务端中转但不持久化”的消息分发通道。服务端负责：鉴权校验、限流、投递到 FCM topic（不再生成持久化 seq）。
   - 发送/接收均使用 data payload（见第 7 节消息模型），不使用通知栏模板。
-  - 可靠性：允许至多一次/乱序，客户端以 seq 去重与排序；房间关闭后停止投递。
+  - 可靠性：允许至多一次/乱序，客户端以 sent_at+client_msg_id 去重与排序；房间关闭后停止投递。
+- Firebase Auth（鉴权）
+  - 使用 Firebase Auth 管理登录。custom claims 仅作为 Firestore 中用户积分的摘要镜像：points_remaining、last_claim_date；真实来源以 Firestore 为准。
+  - 更新 custom claims 后客户端需刷新 ID token（getIdToken(true)）才能获取到最新值。
 - 浏览器 IndexedDB（本地消息与收藏）
   - 本地临时持久化：每个房间独立存储消息与光标；刷新/重开页面可恢复到最近状态。
   - 清空策略：房间 closed 或用户“到达/下车”后，清空该房间的普通消息，仅保留“收藏”。
@@ -90,14 +93,19 @@
   - carriage_number / row / seat_letter：席位信息（行号 1..N，座位字母 A/B/C/D/F）。
   - depart_abs_local / arrival_abs_local：本地绝对时间（含时区偏移）。
   - depart_abs_utc / arrival_abs_utc：UTC 绝对时间，方便对齐跨时区比较。
+  - points_cost：本次行程所需积分成本，按《数据规范》stations[].points 计算。
   - room_ids：按规范生成的全车/车厢/同排/席位四类房间 ID（详见第 7 节与《数据规范》5)）。
-  - room_status：pending/open/closed。
   - status：reserved → paid → checked_in → boarded → completed；并含 cancelled/expired/refunded 分支。
   - created_at / updated_at：时间戳。
   - payment：金额分、币种、状态、支付时间、渠道、交易号等。
   - train_snapshot：购票时的列车模板快照（至少包含 id/name/theme/timezone/departure_time/stations）。
   - pnr_code：取票码/短码；qrcode_payload：二维码载荷（如 join_url）。
   - join_tokens：进入各房间所需的临时鉴权令牌（global/carriage/row/seat）。
+
+- 字段用途说明
+  - pnr_code：用于线下核验或快速取票/分享时的短码；可作为 join_url 的一部分进行扫码入场。
+  - join_tokens（JWT）：由 join 接口按房间粒度签发，包含 { sub: user_id, ticket_id, room_scope, exp } 等声明，仅在短期内有效；发送消息或加入房间时作为 Bearer 鉴权使用。
+  - room_status：计算字段，不持久化；按“售卖规则 + 到达后缓冲 30 分钟”的策略实时判定 open/closed。
 
 - 状态流转
   - reserved：已锁座待支付（占用座位与时效）。
@@ -110,12 +118,15 @@
   - refunded：支付后发起退款并完成。
 
 
+- 积分与签到
+  - 每日积分按“用户本地时区”的自然日计算，需手动调用签到接口完成领取；可累加。
+  - 购票约束：仅当 points_remaining ≥ points_cost 才能创建票据；不支持“先购票后签到补足”。
+  - 退票与退分：允许发车后退票（至到达前），按取消当天将 points_cost 退回，保证幂等。
+
 7) 聊天室与消息
 
 - Room 生命周期
-  - pending：开售前或开售后未到“候车开放”阈值（实现可等同 open）。
-  - open：可加入、可发言；通常从开售起至到达后一小段缓冲期内。
-  - closed：不可加入/不可发言；FCM 停止投递；客户端清空非收藏消息。
+  - 计算属性，不持久化：按规则实时判断 open/closed。建议 open 条件为 now ∈ [open_at(service_date), arrival_abs_local + 30min]，否则 closed；pending 可与 open 等同处理。
 - roomId 命名与 FCM Topic 命名
   - 统一以《数据规范》5) 节的 roomId 生成规则为准：
     - 全车：train-${trainId}-${serviceDate}-global_${arrivalISO}
@@ -125,16 +136,15 @@
   - FCM Topic 建议直接等于 roomId（必要时做 URL-safe 处理，如替换冒号/加号）。
 - TTL 设置
   - FCM 消息 TTL：不超过到达时刻 arrival_abs（本地）+ 30 分钟；超时消息不再投递。
-  - Firestore 中 room_status 从 open → closed 的切换在到达后 T=30min 内完成。
 - 消息模型（data payload）
   - 字段：
     - room_id：字符串，目标房间。
     - msg_id：服务器分配的唯一消息 ID。
     - client_msg_id：客户端生成的临时 ID（用于去重与回执匹配）。
-    - seq：递增序号（每房间独立），用于乱序重排与幂等。
     - sent_at：服务器时间 ISO 字符串。
     - sender：{ user_id, nickname?, avatar_url? }。
     - content：{ text }，文本上限建议 2000 字符或 4KB 以内；超限返回 MESSAGE_TOO_LARGE。
+  - 排序与去重：客户端按 sent_at 升序重排；当 sent_at 相同时以 client_msg_id 升序作为稳定次序；去重键为 client_msg_id（相同 client_msg_id 的重复投递需幂等）。
 - 本地消息（IndexedDB）
   - 客户端持久化房间消息、未读数、草稿等；刷新可恢复。
   - 触发清空：房间 closed 或用户到达（boarded→completed）。收藏消息不清空，仅本地可见。
@@ -159,8 +169,9 @@
 - 定义“进行中时间窗”
   - 对状态 ∈ {paid, checked_in, boarded} 的票据，时间窗为 [depart_abs, arrival_abs]。
 - 规则
-  - 同一用户在任意重叠的时间窗内仅允许一张有效车次票据。
-  - 下单/支付前校验：若存在与新行程重叠的进行中票据，则返回 USER_ALREADY_ON_TRIP，并提示“当前行程与已购行程时间重叠”。
+  - 不允许“同时购买”与“同时乘坐”。同一用户在任意重叠的时间窗内仅允许一张有效车次票据。
+  - 购票阶段校验：创建/支付前，对将要购票行程 [from→to] 对应的绝对区间与用户已有进行中票据做重叠分析；若有重叠，拒绝下单，返回 USER_ALREADY_ON_TRIP。
+  - join 阶段复核：进入任一房间前再次校验用户当前时间是否处于另一趟列车的进行中区间；不通过则拒绝进入，返回 JOIN_DENIED_ALREADY_ON_TRIP。
 
 
 10) 未来 N 天窗口
@@ -174,23 +185,40 @@
 
 - GET /data/trains.json
   - 返回 trains 模板数组（静态）。
+- GET /api/points/me（积分）
+  - 返回当前用户积分余额与最近签到日期：{ points_remaining, last_claim_date_local, last_claim_date_train }。
+- POST /api/points/claim（每日手动签到）
+  - 按“用户本地时区”的自然日做签到去重；成功则累加积分并返回最新余额与日期。
+  - 幂等：同一自然日重复调用返回相同结果且不重复加分。
+  - 响应示例：
+
+    ```json
+    { "points_remaining": 42, "last_claim_date_local": "2025-08-10", "last_claim_date_train": "2025-08-10" }
+    ```
 - POST /api/tickets
   - 创建订单与票据：参数含 train_id、service_date、from/to、seat_strategy 等；返回 Ticket DTO（含本地/车次时区时间字段）。
+  - 积分购票：需 points_remaining ≥ points_cost 才可创建；不支持“先购票后签到补足”。
 - GET /api/tickets/[id]
   - 查询票据详情。
 - POST /api/tickets/[id]/cancel（可选）
-  - 取消未上车订单，释放座位，更新状态为 cancelled。
+  - 取消未支付/未生效的预留单，释放座位，更新状态为 cancelled。
+- POST /api/tickets/[id]/refund（退款）
+  - 允许发车后发起退款（至到达前，具体窗口见产品策略）；按“取消当天”将 points_cost 全额退回（方案 B），幂等。
 - POST /api/chat/join、/send、/leave（可选）
-  - join：颁发 join_token、订阅 FCM topic；send：鉴权、限流、seq 分配并下发；leave：取消订阅。
+  - join：颁发 join_token（JWT）、订阅 FCM topic；send：鉴权、限流并下发（不分配持久化 seq）；leave：取消订阅。
 - POST /api/reports
   - 返回 501 { "message": "正在开发..." }
 - DTO 时间字段
   - 同时提供 local 与 train timezone 两套绝对时间字符串（参见《数据规范》6) 示例）。
+  - DTO 同时返回积分摘要：points_remaining、last_claim_date_local、last_claim_date_train。
 
 
 12) 错误码与提示
 
 - USER_ALREADY_ON_TRIP：已有重叠行程，提示“你已在另一趟车上/时间重叠，无法购票”。
+- JOIN_DENIED_ALREADY_ON_TRIP：进入房间被拒，提示“当前处于另一趟列车行程中”。
+- INSUFFICIENT_POINTS：积分余额不足，提示“余额不足，无法购票”。
+- ALREADY_CLAIMED_TODAY：今日已签到，无需重复。
 - SEAT_CONFLICT_RETRY：并发占座冲突，提示“选座冲突，请重试或更换策略”。
 - NOT_ON_SALE / SALE_NOT_OPEN / SALE_CLOSED：不在可售期、未开售、已停售。
 - ROOM_CLOSED：房间已关闭，不可加入/发送。
@@ -201,7 +229,7 @@
 
 - 选座正确：sequential 与 smart_random 均按预期；并发冲突能回退并重试。
 - 单车限制生效：重复/重叠时间窗被拦截。
-- FCM 收发稳定：消息按 roomId 订阅/投递，客户端基于 seq 可重排与去重。
+- FCM 收发稳定：消息按 roomId 订阅/投递，客户端基于 sent_at + client_msg_id 可重排与去重。
 - IndexedDB 刷新可恢复：页面刷新后仍能恢复房间消息；房间关闭或到达后自动清空非收藏消息。
 - 时间切换正确：列表/详情/票面/倒计时均能在本地与车次时区切换且一致。
 
@@ -235,8 +263,8 @@
     "sales_close_before_departure_minutes": 10,
     "stations": [
       { "name": "起始站", "description": "整体初印象", "departure_time": "08:35+00" },
-      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00" },
-      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00" }
+      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00", "points": 1 },
+      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00", "points": 2 }
     ]
   },
   {
@@ -261,8 +289,8 @@
     "sales_close_before_departure_minutes": 30,
     "stations": [
       { "name": "始发站", "description": "集合点", "departure_time": "23:30+00" },
-      { "name": "午夜前", "description": "聊至深夜", "arrival_time": "23:55+00", "departure_time": "23:58+00" },
-      { "name": "凌晨终点", "description": "次日抵达", "arrival_time": "00:40+01" }
+      { "name": "午夜前", "description": "聊至深夜", "arrival_time": "23:55+00", "departure_time": "23:58+00", "points": 1 },
+      { "name": "凌晨终点", "description": "次日抵达", "arrival_time": "00:40+01", "points": 2 }
     ]
   }
 ]
@@ -289,13 +317,13 @@
   "arrival_abs_local": "2025-08-16T09:45:00+08:00",
   "depart_abs_utc": "2025-08-16T00:35:00Z",
   "arrival_abs_utc": "2025-08-16T01:45:00Z",
+  "points_cost": 3,
   "room_ids": {
     "global": "train-K7701-2025-08-16-global_2025-08-16T09:45:00+08:00",
     "carriage": "train-K7701-2025-08-16-carriage-3_2025-08-16T09:45:00+08:00",
     "row": "train-K7701-2025-08-16-seat-row-07_2025-08-16T09:45:00+08:00",
     "seat": "train-K7701-2025-08-16-seat-07D_2025-08-16T09:45:00+08:00"
   },
-  "room_status": "pending",
   "status": "paid",
   "created_at": "2025-08-10T12:00:00Z",
   "updated_at": "2025-08-10T12:00:00Z",
@@ -315,8 +343,8 @@
     "departure_time": "08:35+00",
     "stations": [
       { "name": "起始站", "description": "整体初印象", "departure_time": "08:35+00" },
-      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00" },
-      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00" }
+      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00", "points": 1 },
+      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00", "points": 2 }
     ]
   },
   "pnr_code": "PNR8X3Y9Z",
@@ -326,6 +354,9 @@
     "carriage": "jtk_car_3_def",
     "row": "jtk_row_07_ghi",
     "seat": "jtk_seat_07D_jkl"
-  }
+  },
+  "points_remaining": 42,
+  "last_claim_date_local": "2025-08-10",
+  "last_claim_date_train": "2025-08-10"
 }
 ```
