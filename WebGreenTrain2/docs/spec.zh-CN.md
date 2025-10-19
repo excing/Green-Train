@@ -84,9 +84,11 @@
       - description: string（可选）
       - arrival_time?: string（可选，HH:mm+dd；始发站不得提供）
       - departure_time?: string（可选，HH:mm+dd；终到站不得提供）
+      - points?: number（可选，积分成本；表示“从前一个站到达该站”的单段积分消耗。始发站须省略或设为 0。）
     - 语义：
       - 站点按顺序组成完整旅程；中间站需同时具备到/发时刻，且 arrival_time ≤ departure_time（就地停靠）。
       - 始发站只能有 departure_time；终到站只能有 arrival_time。
+      - 票据积分成本 points_cost = Σ stations[k].points（k ∈ (from_station_index, to_station_index]），缺省 points 视为 0。
 - 校验要点
   - id：^[A-Za-z0-9_-]{1,32}$
   - name/theme：非空，长度 ≤ 120
@@ -170,13 +172,14 @@
   - arrival_abs_local: string（ISO，本地绝对时间，含偏移）
   - depart_abs_utc: string（ISO，UTC）
   - arrival_abs_utc: string（ISO，UTC）
+  - points_cost: number（积分成本；按 stations[].points 计算的本次行程总消耗）
   - room_ids: {
       global: string,
       carriage: string,
       row: string,
       seat: string
     }
-  - room_status: 'pending'|'open'|'closed'（当前会话室状态）
+  - room_status: 'pending'|'open'|'closed'（计算字段，非持久化；按规则实时判断）
   - status: 'pending_payment'|'paid'|'cancelled'|'refunded'|'completed'
   - created_at: string（ISO）
   - updated_at: string（ISO）
@@ -190,6 +193,7 @@
   - 候车信息：发车/到达本地与列车时区时间、倒计时
   - 进入方式：join_url、二维码（qrcode_payload）
   - 支付信息：金额、状态、失败原因摘要
+  - 积分摘要：points_remaining、last_claim_date_local（用户本地时区自然日）、last_claim_date_train（train.timezone 自然日）
   - 退改签摘要：可退改、截止时间、手续费（若实现）
   - 重要：保存 from_station_name/to_station_name 快照，避免历史票据受后续改名影响
 
@@ -240,8 +244,8 @@
     "sales_close_before_departure_minutes": 10,
     "stations": [
       { "name": "起始站", "description": "整体初印象", "departure_time": "08:35+00" },
-      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00" },
-      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00" }
+      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00", "points": 1 },
+      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00", "points": 2 }
     ]
   },
   {
@@ -266,8 +270,8 @@
     "sales_close_before_departure_minutes": 30,
     "stations": [
       { "name": "始发站", "description": "集合点", "departure_time": "23:30+00" },
-      { "name": "午夜前", "description": "聊至深夜", "arrival_time": "23:55+00", "departure_time": "23:58+00" },
-      { "name": "凌晨终点", "description": "次日抵达", "arrival_time": "00:40+01" }
+      { "name": "午夜前", "description": "聊至深夜", "arrival_time": "23:55+00", "departure_time": "23:58+00", "points": 1 },
+      { "name": "凌晨终点", "description": "次日抵达", "arrival_time": "00:40+01", "points": 2 }
     ]
   }
 ]
@@ -294,13 +298,13 @@
   "arrival_abs_local": "2025-08-16T09:45:00+08:00",
   "depart_abs_utc": "2025-08-16T00:35:00Z",
   "arrival_abs_utc": "2025-08-16T01:45:00Z",
+  "points_cost": 3,
   "room_ids": {
     "global": "train-K7701-2025-08-16-global_2025-08-16T09:45:00+08:00",
     "carriage": "train-K7701-2025-08-16-carriage-3_2025-08-16T09:45:00+08:00",
     "row": "train-K7701-2025-08-16-seat-row-07_2025-08-16T09:45:00+08:00",
     "seat": "train-K7701-2025-08-16-seat-07D_2025-08-16T09:45:00+08:00"
   },
-  "room_status": "pending",
   "status": "paid",
   "created_at": "2025-08-10T12:00:00Z",
   "updated_at": "2025-08-10T12:00:00Z",
@@ -320,8 +324,8 @@
     "departure_time": "08:35+00",
     "stations": [
       { "name": "起始站", "description": "整体初印象", "departure_time": "08:35+00" },
-      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00" },
-      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00" }
+      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00", "points": 1 },
+      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00", "points": 2 }
     ]
   },
   "pnr_code": "PNR8X3Y9Z",
@@ -331,7 +335,10 @@
     "carriage": "jtk_car_3_def",
     "row": "jtk_row_07_ghi",
     "seat": "jtk_seat_07D_jkl"
-  }
+  },
+  "points_remaining": 42,
+  "last_claim_date_local": "2025-08-10",
+  "last_claim_date_train": "2025-08-10"
 }
 ```
 
