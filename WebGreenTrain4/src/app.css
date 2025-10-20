@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './lib/styles/tokens.css';
 
 /* 绿皮列车配色主题 */
 :root {
