@@ -1,0 +1,55 @@
+[
+  {
+    "id": "K7701",
+    "name": "K7701",
+    "theme": "聊聊诺兰的新电影",
+    "description": "《星际穿越》《盗梦空间》《敦刻尔克》… 你最喜欢哪一部？",
+    "timezone": "Asia/Shanghai",
+    "status": "active",
+    "status_note": "暑期部分周末加开",
+    "carriages": 10,
+    "rows_per_carriage": 20,
+    "departure_time": "08:35+00",
+    "service_days": [1, 3, 5],
+    "calendar": {
+      "includes": ["2025-08-16"],
+      "excludes": ["2025-08-15"],
+      "include_ranges": [
+        { "start": "2025-07-01", "end": "2025-08-31", "weekdays": [6, 7] }
+      ]
+    },
+    "sales_open_rel": "09:00+00",
+    "sales_close_before_departure_minutes": 10,
+    "stations": [
+      { "name": "起始站", "description": "整体初印象", "departure_time": "08:35+00" },
+      { "name": "中间站", "description": "情节与镜头", "arrival_time": "09:10+00", "departure_time": "09:15+00", "points": 1 },
+      { "name": "终点站", "description": "TOP1 与安利", "arrival_time": "09:45+00", "points": 2 }
+    ]
+  },
+  {
+    "id": "D2025",
+    "name": "D2025 绿皮夜行",
+    "theme": "夜猫子闲聊局",
+    "description": "深夜小聚，聊聊今天的灵感和碎片。",
+    "timezone": "Asia/Shanghai",
+    "status": "paused",
+    "status_note": "临时维护，暂停售票",
+    "carriages": 8,
+    "rows_per_carriage": 18,
+    "departure_time": "23:30+00",
+    "service_days": [2, 4, 6],
+    "calendar": {
+      "rules": [
+        { "freq": "DAILY", "start": "2025-10-01", "end": "2025-10-07" }
+      ],
+      "excludes": ["2025-10-04"]
+    },
+    "sales_open_rel": "10:00+00",
+    "sales_close_before_departure_minutes": 30,
+    "stations": [
+      { "name": "始发站", "description": "集合点", "departure_time": "23:30+00" },
+      { "name": "午夜前", "description": "聊至深夜", "arrival_time": "23:55+00", "departure_time": "23:58+00", "points": 1 },
+      { "name": "凌晨终点", "description": "次日抵达", "arrival_time": "00:40+01", "points": 2 }
+    ]
+  }
+]
