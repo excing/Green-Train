@@ -168,10 +168,14 @@
   - carriage_number: number（车厢号，1..carriages）
   - row: number（行号，1..rows_per_carriage）
   - seat_letter: 'A'|'B'|'C'|'D'|'F'
-  - depart_abs_local: string（ISO，本地绝对时间，含偏移）
-  - arrival_abs_local: string（ISO，本地绝对时间，含偏移）
-  - depart_abs_utc: string（ISO，UTC）
-  - arrival_abs_utc: string（ISO，UTC）
+  - journey_depart_local: string（ISO，用户本地时区的绝对发车时间）
+  - journey_arrival_local: string（ISO，用户本地时区的绝对到达时间）
+  - journey_depart_train: string（ISO，列车时区的绝对发车时间）
+  - journey_arrival_train: string（ISO，列车时区的绝对到达时间）
+  - depart_abs_local: string（兼容字段；同 journey_depart_local）
+  - arrival_abs_local: string（兼容字段；同 journey_arrival_local）
+  - depart_abs_utc: string（ISO，UTC；可选）
+  - arrival_abs_utc: string（ISO，UTC；可选）
   - points_cost: number（积分成本；按 stations[].points 计算的本次行程总消耗）
   - room_ids: {
       global: string,
@@ -187,15 +191,11 @@
   - train_snapshot: object（购票时的列车模板快照：至少包含 id/name/theme/timezone/departure_time/stations 等）
   - pnr_code: string（取票码/短码）
   - qrcode_payload: string（二维码载荷，如 join_url 或校验数据）
-  - join_tokens: { global?: string; carriage?: string; row?: string; seat?: string }（进入房间的临时鉴权令牌）
-- 用户返回（组合自持久化数据）：
-  - 票面信息：车次、主题、日期、席位（如 3车厢 07D）、上下车站名
-  - 候车信息：发车/到达本地与列车时区时间、倒计时
-  - 进入方式：join_url、二维码（qrcode_payload）
-  - 支付信息：金额、状态、失败原因摘要
-  - 积分摘要：points_remaining、last_claim_date_local（用户本地时区自然日）、last_claim_date_train（train.timezone 自然日）
-  - 退改签摘要：可退改、截止时间、手续费（若实现）
-  - 重要：保存 from_station_name/to_station_name 快照，避免历史票据受后续改名影响
+  - join_tokens: { global?: string; carriage?: string; row?: string; seat?: string }（进入房间的临时鉴权令牌，JWT）
+- 字段用途补充说明
+  - points_cost：Σ stations[k].points（k ∈ (from, to]）；缺省 points 按 0 处理。
+  - pnr_code：用于线下核验或快速入场；可包含在 join_url 的查询参数或二维码中。
+  - join_tokens（JWT）：建议 payload 含 { sub: user_id, ticket_id, room_scope, exp, iat }；仅短期有效；发送/加入房间时以 Bearer 鉴权。
 
 
 7) 查询/搜索与 UI 行为
@@ -294,6 +294,10 @@
   "carriage_number": 3,
   "row": 7,
   "seat_letter": "D",
+  "journey_depart_local": "2025-08-16T08:35:00+08:00",
+  "journey_arrival_local": "2025-08-16T09:45:00+08:00",
+  "journey_depart_train": "2025-08-16T08:35:00+08:00",
+  "journey_arrival_train": "2025-08-16T09:45:00+08:00",
   "depart_abs_local": "2025-08-16T08:35:00+08:00",
   "arrival_abs_local": "2025-08-16T09:45:00+08:00",
   "depart_abs_utc": "2025-08-16T00:35:00Z",
