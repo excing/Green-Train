@@ -41,10 +41,10 @@
     - 票据（Ticket）与支付摘要。
     - 座位锁与占用（下单/支付过程的并发控制）。
     - 用户积分账户与签到记录（points_balance、last_claim_date）。
-  - 不存消息体，也不持久化房间 seq/生命周期：所有聊天消息仅通过 FCM 下发与浏览器本地保存；房间开闭按规则实时计算。
+  - 边界：不存消息体，也不持久化房间 seq/生命周期；所有聊天消息仅通过 FCM 下发与浏览器本地保存；房间开闭按规则实时计算。
 - FCM（实时消息通道）
   - 作为“服务端中转但不持久化”的消息分发通道。服务端负责：鉴权校验、限流、投递到 FCM topic（不再生成持久化 seq）。
-  - 发送/接收均使用 data payload（见第 7 节消息模型），不使用通知栏模板。
+  - 发送/接收均使用 data payload（见第 7 节消息模型），不使用系统通知模板。
   - 可靠性：允许至多一次/乱序，客户端以 sent_at+client_msg_id 去重与排序；房间关闭后停止投递。
 - Firebase Auth（鉴权）
   - 使用 Firebase Auth 管理登录。custom claims 仅作为 Firestore 中用户积分的摘要镜像：points_remaining、last_claim_date；真实来源以 Firestore 为准。
@@ -69,8 +69,8 @@
   - status/status_note：控制展示与售卖能力。
   - departure_time：作为基准发车相对时刻。
   - service_days + calendar：混合合并（排除优先）。
-  - sales_open_rel、sales_close_before_departure_minutes：售卖开闭规则参数。
-  - stations：始发/中间/终到站时刻约定与跨日处理。
+  - sales_open_rel（HH:mm+dd）、sales_close_before_departure_minutes：售卖开闭规则参数。
+  - stations：始发/中间/终到站时刻约定与跨日处理；points 字段定义积分段成本。
 - 运行日合并规则参考《数据规范》3) 节：先加白再减黑，排除优先。
 
 
@@ -91,8 +91,7 @@
   - train_id / service_date / timezone：车次 ID、运行日、IANA 时区。
   - from_station_index / to_station_index：上下车站索引；同时保存 from/to 站名快照，避免后续改名影响历史票。
   - carriage_number / row / seat_letter：席位信息（行号 1..N，座位字母 A/B/C/D/F）。
-  - depart_abs_local / arrival_abs_local：本地绝对时间（含时区偏移）。
-  - depart_abs_utc / arrival_abs_utc：UTC 绝对时间，方便对齐跨时区比较。
+  - journey_* 时间：journey_depart_local/train 与 journey_arrival_local/train 四个绝对时间；兼容 depart_abs_local/arrival_abs_local；可选提供 UTC。
   - points_cost：本次行程所需积分成本，按《数据规范》stations[].points 计算。
   - room_ids：按规范生成的全车/车厢/同排/席位四类房间 ID（详见第 7 节与《数据规范》5)）。
   - status：reserved → paid → checked_in → boarded → completed；并含 cancelled/expired/refunded 分支。
@@ -100,7 +99,7 @@
   - payment：金额分、币种、状态、支付时间、渠道、交易号等。
   - train_snapshot：购票时的列车模板快照（至少包含 id/name/theme/timezone/departure_time/stations）。
   - pnr_code：取票码/短码；qrcode_payload：二维码载荷（如 join_url）。
-  - join_tokens：进入各房间所需的临时鉴权令牌（global/carriage/row/seat）。
+  - join_tokens：进入各房间所需的临时鉴权令牌（global/carriage/row/seat，JWT）。
 
 - 字段用途说明
   - pnr_code：用于线下核验或快速取票/分享时的短码；可作为 join_url 的一部分进行扫码入场。
@@ -117,11 +116,12 @@
   - expired：预留/未支付超时、或过了 close_at 未成行。
   - refunded：支付后发起退款并完成。
 
-
 - 积分与签到
-  - 每日积分按“用户本地时区”的自然日计算，需手动调用签到接口完成领取；可累加。
-  - 购票约束：仅当 points_remaining ≥ points_cost 才能创建票据；不支持“先购票后签到补足”。
+  - 每日积分按“用户本地时区”的自然日计算，需手动调用签到接口完成领取；可累加；同一自然日幂等。
+  - 积分额度：匿名用户 +10；Google 登录用户 +20。
+  - 购票约束：仅当 points_remaining ≥ points_cost 才能创建票据；未签到但余额足够仍可购票；不支持“先购票后签到补足”。
   - 退票与退分：允许发车后退票（至到达前），按取消当天将 points_cost 退回，保证幂等。
+
 
 7) 聊天室与消息
 
@@ -189,15 +189,15 @@
   - 返回当前用户积分余额与最近签到日期：{ points_remaining, last_claim_date_local, last_claim_date_train }。
 - POST /api/points/claim（每日手动签到）
   - 按“用户本地时区”的自然日做签到去重；成功则累加积分并返回最新余额与日期。
-  - 幂等：同一自然日重复调用返回相同结果且不重复加分。
+  - 匿名 +10、Google +20；同一自然日幂等。
   - 响应示例：
 
     ```json
     { "points_remaining": 42, "last_claim_date_local": "2025-08-10", "last_claim_date_train": "2025-08-10" }
     ```
 - POST /api/tickets
-  - 创建订单与票据：参数含 train_id、service_date、from/to、seat_strategy 等；返回 Ticket DTO（含本地/车次时区时间字段）。
-  - 积分购票：需 points_remaining ≥ points_cost 才可创建；不支持“先购票后签到补足”。
+  - 创建订单与票据：参数含 train_id、service_date、from/to、seat_strategy 等；返回 Ticket DTO（含 journey_* 的本地/车次时区时间字段）。
+  - 积分购票：需 points_remaining ≥ points_cost 才可创建；未签到余额足够仍可购；不支持“先购票后签到补足”。
 - GET /api/tickets/[id]
   - 查询票据详情。
 - POST /api/tickets/[id]/cancel（可选）
@@ -209,7 +209,7 @@
 - POST /api/reports
   - 返回 501 { "message": "正在开发..." }
 - DTO 时间字段
-  - 同时提供 local 与 train timezone 两套绝对时间字符串（参见《数据规范》6) 示例）。
+  - 同时提供 local 与 train timezone 两套绝对时间字符串（journey_depart_local/train、journey_arrival_local/train）。
   - DTO 同时返回积分摘要：points_remaining、last_claim_date_local、last_claim_date_train。
 
 
@@ -313,6 +313,10 @@
   "carriage_number": 3,
   "row": 7,
   "seat_letter": "D",
+  "journey_depart_local": "2025-08-16T08:35:00+08:00",
+  "journey_arrival_local": "2025-08-16T09:45:00+08:00",
+  "journey_depart_train": "2025-08-16T08:35:00+08:00",
+  "journey_arrival_train": "2025-08-16T09:45:00+08:00",
   "depart_abs_local": "2025-08-16T08:35:00+08:00",
   "arrival_abs_local": "2025-08-16T09:45:00+08:00",
   "depart_abs_utc": "2025-08-16T00:35:00Z",
