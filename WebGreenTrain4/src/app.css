@@ -1,1 +1,32 @@
 @import 'tailwindcss';
+
+/* 绿皮列车配色主题 */
+:root {
+  /* 绿皮列车的经典绿色 */
+  --color-train-green: #2d5016;
+  --color-train-light-green: #4a7c2c;
+  --color-train-lighter-green: #6ba547;
+  --color-train-pale-green: #a8d5a8;
+
+  /* 辅助色 */
+  --color-train-cream: #f5f1e8;
+  --color-train-gold: #d4a574;
+  --color-train-red: #c41e3a;
+
+  /* 现代年轻人审美 */
+  --color-accent: #ff6b6b;
+  --color-success: #51cf66;
+  --color-warning: #ffd43b;
+  --color-error: #ff6b6b;
+}
+
+body {
+  background-color: var(--color-train-cream);
+  color: var(--color-train-green);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* 平滑过渡 */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
