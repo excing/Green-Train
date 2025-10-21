@@ -4,13 +4,6 @@
   import { getServiceDates } from '$lib/calendar';
   import { computeStationDateTimes, formatLocal, formatTrainTz } from '$lib/time';
 
-  export const load = async ({ fetch, params, url }) => {
-    const res = await fetch('/data/trains.json');
-    const trains: Train[] = await res.json();
-    const train = trains.find((t) => t.id === params.id) as Train | undefined;
-    return { train, query: Object.fromEntries(url.searchParams) };
-  };
-
   let { data } = $props<{ data: { train?: Train; query: Record<string, string> } }>();
   let train = data.train;
   if (!train) {
@@ -18,11 +11,11 @@
   }
 
   const FUTURE_DAYS = 30;
-  let serviceDates = train ? getServiceDates(train, FUTURE_DAYS) : [];
+  let serviceDates = $state<string[]>(train ? getServiceDates(train, FUTURE_DAYS) : []);
 
-  let date = (data.query['date'] as string) || serviceDates[0];
-  let fromIndex = parseInt((data.query['from'] as string) ?? '0', 10);
-  let toIndex = parseInt((data.query['to'] as string) ?? String((train?.stations.length ?? 1) - 1), 10);
+  let date = $state<string>((data.query['date'] as string) || '');
+  let fromIndex = $state<number>(parseInt((data.query['from'] as string) ?? '0', 10));
+  let toIndex = $state<number>(parseInt((data.query['to'] as string) ?? String((train?.stations.length ?? 1) - 1), 10));
 
   $effect(() => {
     if (!train) return;

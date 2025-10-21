@@ -5,23 +5,17 @@
   import { computeStationDateTimes, formatLocal, formatTrainTz } from '$lib/time';
   import { computeSalesOpenAt, computeSalesCloseAt, isOnSale } from '$lib/sales';
 
-  export const load = async ({ fetch }) => {
-    const res = await fetch('/data/trains.json');
-    const trains: Train[] = await res.json();
-    return { trains };
-  };
-
   let { data } = $props<{ data: { trains: Train[] } }>();
   let trains: Train[] = data.trains;
   const FUTURE_DAYS = 30;
 
   // 搜索状态
-  let from = '';
-  let to = '';
-  let date = '';
-  let timeRange: 'any' | 'morning' | 'afternoon' | 'evening' = 'any';
-  let theme = '';
-  let expanded: Record<string, boolean> = {};
+  let from = $state('');
+  let to = $state('');
+  let date = $state('');
+  let timeRange = $state<'any' | 'morning' | 'afternoon' | 'evening'>('any');
+  let theme = $state('');
+  let expanded = $state<Record<string, boolean>>({});
 
   // 站点聚合
   const allStations = Array.from(new Set(trains.flatMap((t) => t.stations.map((s) => s.name)))).sort();
@@ -43,10 +37,9 @@
     times: ReturnType<typeof computeStationDateTimes>;
   };
 
-  let results: Row[] = [];
+  let results = $state<Row[]>([]);
 
-  function refresh() {
-    results = trains
+  $effect(() => {     results = trains
       .filter((t) => t.status !== 'hidden')
       .filter((t) => {
         if (theme && !(t.theme?.includes(theme) || t.name.includes(theme))) return false;
@@ -84,10 +77,7 @@
         const closeAt = computeSalesCloseAt(t, ds, i);
         return { train: t, fromIndex: i, toIndex: j, date: ds, dep, arr, durationMin, points, onSale, openAt, closeAt, times } as Row;
       })
-      .sort((a, b) => a.dep.getTime() - b.dep.getTime());
-  }
-
-  $effect(() => { refresh(); });
+      .sort((a, b) => a.dep.getTime() - b.dep.getTime()); });
 
   function fmtTime(d: Date, t: Train, mode: TimeMode) {
     return mode === 'local' ? formatLocal(d) : formatTrainTz(d, t);
