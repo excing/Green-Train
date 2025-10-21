@@ -1,1 +1,25 @@
 @import 'tailwindcss';
+
+:root {
+  --gt-green: #16a34a; /* 主绿 */
+  --gt-cream: #f8f5e7; /* 米黄 */
+  --gt-muted: #64748b;
+  --gt-success: #22c55e;
+  --gt-warning: #f59e0b;
+  --gt-danger: #ef4444;
+}
+
+html, body { height: 100%; }
+body { background: var(--gt-cream); color: #0f172a; }
+
+.badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; }
+.badge.success { background: color-mix(in srgb, var(--gt-success) 15%, white); color: #065f46; border: 1px solid color-mix(in srgb, var(--gt-success) 35%, white); }
+.badge.warning { background: color-mix(in srgb, var(--gt-warning) 15%, white); color: #78350f; border: 1px solid color-mix(in srgb, var(--gt-warning) 35%, white); }
+.badge.danger { background: color-mix(in srgb, var(--gt-danger) 15%, white); color: #7f1d1d; border: 1px solid color-mix(in srgb, var(--gt-danger) 35%, white); }
+
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
+.table th { background: #f8fafc; font-weight: 600; color: #334155; }
+
+.button { background: var(--gt-green); color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; }
+.button.secondary { background: #0ea5e9; }
