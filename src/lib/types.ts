@@ -19,6 +19,10 @@ export interface TrainCalendar {
   excludes?: string[]; // YYYY-MM-DD
 }
 
+// 兼容别名，便于按规范引用
+export type Calendar = TrainCalendar;
+export type ServiceDate = string; // YYYY-MM-DD
+
 export interface Station {
   name: string;
   description?: string;
@@ -57,6 +61,21 @@ export interface TicketRequestDTO {
   fromIndex: number;
   toIndex: number;
   seats: number;
+}
+
+// 最小占位：服务端返回票据的 DTO（按规范可扩展）
+export interface TicketDTO {
+  ticket_id: string;
+  train_id: string;
+  service_date: ServiceDate;
+  timezone: string;
+  from_station_index: number;
+  to_station_index: number;
+  journey_depart_local: string; // ISO
+  journey_arrival_local: string; // ISO
+  journey_depart_train: string; // ISO
+  journey_arrival_train: string; // ISO
+  points_cost: number;
 }
 
 export type TimeMode = 'local' | 'train_tz';

@@ -27,6 +27,7 @@ export function computeSalesCloseAt(train: Train, serviceDate: string, fromIndex
 }
 
 export function isOnSale(train: Train, serviceDate: string, fromIndex = 0, now: Date = new Date()): boolean {
+  if (train.status === 'paused') return false;
   const open = computeSalesOpenAt(train, serviceDate);
   const close = computeSalesCloseAt(train, serviceDate, fromIndex);
   if (!close) return false;
