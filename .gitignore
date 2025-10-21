@@ -1,26 +1,19 @@
-node_modules
+# Node
+node_modules/
 
-# Output
-.output
-.vercel
-.netlify
-.wrangler
-/.svelte-kit
-/build
+# SvelteKit
+.svelte-kit/
+build/
+.vite/
 
-# OS
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
 .DS_Store
-Thumbs.db
-
-# Env
-.env
-.env.*
-!.env.example
-!.env.test
-
-# Vite
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
-
-#firebase
-firebase-adminsdk.json
+*.swp
+.idea/
+.vscode/
