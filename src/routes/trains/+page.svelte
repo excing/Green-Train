@@ -5,7 +5,7 @@
   const visibleStatuses: Set<Train['status']> = new Set(['active', 'deprecated', 'hidden', 'paused']);
   let showHidden = false;
 
-  $: filtered = data.trains.filter(t => visibleStatuses.has(t.status) && (showHidden || t.status !== 'hidden'));
+  var filtered = $derived(data.trains.filter((t: any) => visibleStatuses.has(t.status) && (showHidden || t.status !== 'hidden')));
 </script>
 
 <section class="max-w-3xl mx-auto p-6 space-y-6">
