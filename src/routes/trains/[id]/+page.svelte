@@ -43,8 +43,10 @@
 {:else}
   <section class="max-w-5xl mx-auto p-6 space-y-6">
     <header class="space-y-1">
-      <h1 class="text-2xl font-semibold text-slate-800">{train.name} <span class="text-slate-500 text-base">({train.id})</span></h1>
-      <p class="text-slate-600">{train.theme} · {train.description}</p>
+      <h1 class="text-2xl font-semibold text-slate-800">{train.name} <span class="text-slate-500 text-base">({train.id})</span>
+        {#if train.status === 'paused'}<span class="badge warning ml-2 align-middle">暂停</span>{/if}
+      </h1>
+      <p class="text-slate-600">{train.theme} · {train.description} {#if train.status_note}<span class="text-slate-500">（{train.status_note}）</span>{/if}</p>
     </header>
 
     <div class="rounded-xl bg-white/80 border p-4 shadow-sm space-y-4">

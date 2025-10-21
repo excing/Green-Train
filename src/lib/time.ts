@@ -102,7 +102,24 @@ export function zonedDateUTC(year: number, month: number, day: number, hour: num
   return new Date(finalEpoch);
 }
 
-export function toZonedDateTime(d: Date, timeZone: string): { year: number; month: number; day: number; hour: number; minute: number; date: Date } {
+// 重载：
+// 1) toZonedDateTime(serviceDate, rel, tz) → 绝对时间（Date）
+// 2) toZonedDateTime(date, tz) → 该绝对时间在 tz 下的各字段（便于格式化）
+export function toZonedDateTime(serviceDate: string, rel: string, timeZone: string): Date;
+export function toZonedDateTime(d: Date, timeZone: string): { year: number; month: number; day: number; hour: number; minute: number; date: Date };
+export function toZonedDateTime(a: string | Date, b: string, c?: string) {
+  if (typeof a === 'string' && typeof b === 'string' && typeof c === 'string') {
+    // 计算 serviceDate + rel(HH:mm+dd) 在 timeZone 下的绝对时间
+    const serviceDate = a as string;
+    const rel = b as string;
+    const timeZone = c as string;
+    const { hour, minute, dayOffset } = parseRelativeTime(rel);
+    const ymd = ymdAddDays(serviceDate, dayOffset, timeZone);
+    const { y, m, d } = parseYMD(ymd);
+    return zonedDateUTC(y, m, d, hour, minute, timeZone);
+  }
+  // 兼容旧签名：传入绝对时间与时区，返回该时区下的各字段
+  const d = a as Date; const timeZone = b as string;
   const p = getPartsInZone(d, timeZone);
   return { year: p.year, month: p.month, day: p.day, hour: p.hour, minute: p.minute, date: d };
 }

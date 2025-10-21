@@ -176,7 +176,9 @@
               </td>
               <td class="whitespace-nowrap">{Math.floor(row.durationMin/60)}小时{row.durationMin%60}分</td>
               <td class="whitespace-nowrap">
-                {#if row.onSale}
+                {#if row.train.status === 'paused'}
+                  <span class="badge warning">暂停</span>
+                {:else if row.onSale}
                   <span class="badge success">在售</span>
                 {:else}
                   <span class="badge warning">未开售</span>
