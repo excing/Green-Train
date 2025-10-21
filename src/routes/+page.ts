@@ -1,3 +1,4 @@
+// 加载全部车次供首页筛选使用
 import type { PageLoad } from './$types';
 import type { Train } from '$lib/types';
 

@@ -1,3 +1,4 @@
+<!-- 车次查询主页：提供筛选并展示搜索结果表格 -->
 <script lang="ts">
   import type { Train, TimeMode } from '$lib/types';
   import { timeMode } from '$lib/stores/timeMode';

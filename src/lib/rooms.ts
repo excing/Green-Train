@@ -1,3 +1,4 @@
+// 会话/房间标识工具，用于统一拼接实时沟通 ID
 export function roomId(trainId: string, date: string, from: string, to: string): string {
   return `gt-${trainId}-${date}-${from}-${to}`.replace(/\s+/g, '_');
 }

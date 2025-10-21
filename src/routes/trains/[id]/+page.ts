@@ -1,3 +1,4 @@
+// 获取指定车次及请求查询参数
 import type { PageLoad } from './$types';
 import type { Train } from '$lib/types';
 

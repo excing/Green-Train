@@ -1,3 +1,4 @@
+<!-- 单车次详情页：展示运行日、区间时刻与购票入口 -->
 <script lang="ts">
   import type { Train, TimeMode } from '$lib/types';
   import { timeMode } from '$lib/stores/timeMode';

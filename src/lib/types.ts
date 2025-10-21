@@ -1,3 +1,4 @@
+// 项目核心类型定义，描述列车、站点与票务结构
 export type TrainStatus = 'active' | 'paused' | 'hidden' | 'deprecated';
 
 export interface CalendarRule {

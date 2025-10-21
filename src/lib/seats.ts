@@ -1,4 +1,4 @@
-// 简单占位：顺序与带种子的伪随机
+// 座位分配辅助：提供顺序占位与种子伪随机选座算法
 
 export interface Seat { carriage: number; row: number; seat: string }
 

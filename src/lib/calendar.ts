@@ -1,3 +1,4 @@
+// 列车日历工具：判断服务日与生成可运行日期序列
 import type { Train } from './types';
 import { todayInZone } from './time';
 

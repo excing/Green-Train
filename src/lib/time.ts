@@ -1,3 +1,4 @@
+// 时间与时区计算工具，负责将服务日相对时间转换为绝对时间
 import type { Station, StationTiming, Train } from './types';
 
 export function parseRelativeTime(input: string): { hour: number; minute: number; dayOffset: number } {

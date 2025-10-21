@@ -1,3 +1,4 @@
+// 售票窗口计算：确定开售、停售时间并判断销售状态
 import type { Train } from './types';
 import { computeStationDateTimes, parseRelativeTime } from './time';
 

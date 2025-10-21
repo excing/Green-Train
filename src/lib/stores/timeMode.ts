@@ -1,3 +1,4 @@
+// 用户时间显示偏好存储，带本地持久化
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 import type { TimeMode } from '$lib/types';
